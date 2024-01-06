@@ -1,3 +1,5 @@
+@file:Suppress("UnstableApiUsage")
+
 pluginManagement {
     repositories {
         google()
@@ -13,6 +15,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "JXLCoder"
+rootProject.name = "BitmapScaler"
 include(":app")
-include(":jxlcoder")
+include(":bitmapscaler")
