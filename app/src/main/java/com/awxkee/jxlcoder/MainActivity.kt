@@ -1,113 +1,72 @@
 package com.awxkee.jxlcoder
 
 import android.graphics.Bitmap
-import android.graphics.ColorSpace
-import android.hardware.DataSpace
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.tooling.preview.Preview
-import coil.ImageLoader
-import coil.compose.AsyncImage
-import com.awxkee.jxlcoder.ui.theme.JXLCoderTheme
-import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideImage
-import okio.buffer
-import okio.source
+import androidx.compose.ui.layout.ContentScale
+import androidx.core.graphics.drawable.toBitmap
+import coil.Coil
+import coil.request.ImageRequest
+import com.t8rin.bitmapscaler.BitmapScaler
+import com.t8rin.bitmapscaler.ScaleMode.Bilinear
+import com.t8rin.bitmapscaler.ScaleMode.Cubic
+import com.t8rin.bitmapscaler.ScaleMode.Hann
+import com.t8rin.bitmapscaler.ScaleMode.Lanczos
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
-    @OptIn(ExperimentalGlideComposeApi::class)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-//        val buffer1 = this.assets.open("hdr_cosmos.jxl").source().buffer().readByteArray()
-//        assert(JxlCoder.isJXL(buffer1))
-//        assert(JxlCoder().getSize(buffer1) != null)
-//        val iccCosmosImage = JxlCoder().decode(buffer1)
-//        val buffer2 = this.assets.open("second_jxl.jxl").source().buffer().readByteArray()
-//        assert(JxlCoder.isJXL(buffer2))
-//        assert(JxlCoder().getSize(buffer2) != null)
-//        val buffer3 = this.assets.open("alpha_jxl.jxl").source().buffer().readByteArray()
-//        assert(JxlCoder.isJXL(buffer3))
-//        assert(JxlCoder().getSize(buffer3) != null)
+        var image by mutableStateOf<Bitmap?>(null)
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val buffer4 = this.assets.open("alpha_png_freepik.jxl").source().buffer().readByteArray()
-            assert(JxlCoder.isJXL(buffer4))
-            val largeImageSize = JxlCoder().getSize(buffer4)
-            assert(largeImageSize != null)
-            val image = JxlCoder().decodeSampled(
-                buffer4,
-                largeImageSize!!.width,
-                largeImageSize!!.height,
-                preferredColorConfig = PreferredColorConfig.RGBA_8888,
-                ScaleMode.FIT,
-                JxlResizeFilter.LANCZOS
-            )
-//
-//            val image10Bit = image //.copy(Bitmap.Config.RGBA_F16, true)
-////            image10Bit.setColorSpace(ColorSpace.get(ColorSpace.Named.DCI_P3))
-            val compressedBuffer = JxlCoder().encode(
-                image,
-                colorSpace = JxlColorSpace.RGBA,
-                compressionOption = JxlCompressionOption.LOSSY,
-                effort = 8,
-                quality = 100,
-            )
-            val decompressedImage = JxlCoder().decode(compressedBuffer, preferredColorConfig = PreferredColorConfig.RGBA_8888)
+            CoroutineScope(Dispatchers.Main).launch {
+                image = Coil.imageLoader(this@MainActivity).execute(
+                    ImageRequest.Builder(this@MainActivity)
+                        .allowHardware(false)
+                        .data("https://avatars.githubusercontent.com/u/52178347?s=80&u=bc9f21f39a78388cbdf833914d210dfe030d7116&v=4")
+                        .build()
+                ).drawable!!.toBitmap()
+            }
+
 
             setContent {
-                JXLCoderTheme {
-                    // A surface container using the 'background' color from the theme
-                    Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        color = MaterialTheme.colorScheme.background
-                    ) {
-//                        AsyncImage(
-//                            model = "https://pdfconverter1984.blob.core.windows.net/simple/wide_gamut.jxl",
-//                            contentDescription = null,
-//                            imageLoader = ImageLoader.Builder(this)
-//                                .components {
-//                                    add(JxlDecoder.Factory())
-//                                }
-//                                .build()
-//                        )
+                Column(Modifier.verticalScroll(rememberScrollState())) {
+                    image?.let {
+                        Image(bitmap = it.asImageBitmap(), contentDescription = null)
                         Image(
-                            bitmap = decompressedImage.asImageBitmap(),
-                            contentDescription = "ok"
+                            bitmap = remember(it) {
+                                BitmapScaler.scale(
+                                    bitmap = it,
+                                    dstWidth = 1000,
+                                    dstHeight = 1000,
+                                    scaleMode = Hann
+                                ).asImageBitmap()
+                            },
+                            contentDescription = null,
+                            contentScale = ContentScale.FillWidth,
+                            modifier = Modifier.fillMaxWidth()
                         )
-
-//                        GlideImage(
-//                            model = "https://wh.aimuse.online/preset/hdr_cosmos.jxl",
-//                            contentDescription = ""
-//                        )
                     }
                 }
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    JXLCoderTheme {
-        Greeting("Android")
     }
 }
