@@ -16,5 +16,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "BitmapScaler"
-include(":app")
 include(":bitmapscaler")
